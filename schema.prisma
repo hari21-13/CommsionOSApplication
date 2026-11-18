@@ -1,0 +1,150 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Organisation {
+  id           String        @id @default(uuid())
+  name         String
+  currency     String        @default("INR")
+  financialYr  String        @default("FY 2026 - 2027 (Apr-Mar)")
+  taxRule      String        @default("10% Sec 194H Commission TDS")
+  departments  String        @default("Enterprise, Channel, Retail")
+  createdAt    DateTime      @default(now())
+  users        User[]
+  employees    Employee[]
+  policies     Policy[]
+  transactions Transaction[]
+  reversals    Reversal[]
+  batches      ApprovalBatch[]
+  payouts      PayoutRecord[]
+  disputes     Dispute[]
+  payments     SubscriptionPayment[]
+}
+
+model User {
+  id           String       @id @default(uuid())
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  email        String       @unique
+  passwordHash String
+  role         String       @default("Client")
+  name         String
+  createdAt    DateTime     @default(now())
+}
+
+model Employee {
+  id             String       @id @default(uuid())
+  empCode        String       @unique
+  orgId          String
+  organisation   Organisation @relation(fields: [orgId], references: [id])
+  name           String
+  email          String
+  role           String
+  department     String
+  assignedPolicy String
+  earnedComm     Decimal      @db.Decimal(12, 2)
+  status         String       @default("Active")
+}
+
+model Policy {
+  id           String       @id @default(uuid())
+  polCode      String       @unique
+  version      String
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  name         String
+  modelType    String
+  ruleFormula  String
+  status       String       @default("Active")
+}
+
+model Transaction {
+  id           String       @id @default(uuid())
+  invoiceNo    String       @unique
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  customer     String
+  grossAmount  Decimal      @db.Decimal(12, 2)
+  deductions   Decimal      @db.Decimal(12, 2)
+  eligibleBase Decimal      @db.Decimal(12, 2)
+  commission   Decimal      @db.Decimal(12, 2)
+  salesperson  String
+  policyVer    String
+  status       String       @default("Validated")
+  createdAt    DateTime     @default(now())
+}
+
+model Reversal {
+  id               String       @id @default(uuid())
+  revCode          String       @unique
+  orgId            String
+  organisation     Organisation @relation(fields: [orgId], references: [id])
+  originalInvoice  String
+  originalSale     Decimal      @db.Decimal(12, 2)
+  refundAmount     Decimal      @db.Decimal(12, 2)
+  originalComm     Decimal      @db.Decimal(12, 2)
+  clawbackReversed Decimal      @db.Decimal(12, 2)
+  remainingPayable Decimal      @db.Decimal(12, 2)
+  auditReason      String
+}
+
+model ApprovalBatch {
+  id           String       @id @default(uuid())
+  batchDate    String
+  title        String
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  amount       Decimal      @db.Decimal(12, 2)
+  note         String
+  reviewer     String
+  status       String       @default("Pending Review")
+}
+
+model PayoutRecord {
+  id           String       @id @default(uuid())
+  utrNumber    String       @unique
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  recipient    String
+  amount       Decimal      @db.Decimal(12, 2)
+  method       String
+  status       String       @default("Reconciled")
+}
+
+model Dispute {
+  id           String       @id @default(uuid())
+  ticketId     String       @unique
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  invoiceRef   String
+  raisedBy     String
+  reason       String
+  status       String       @default("Open")
+  createdAt    DateTime     @default(now())
+}
+
+model SubscriptionPayment {
+  id           String       @id @default(uuid())
+  paymentCode  String       @unique
+  orgId        String
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  planName     String
+  gateway      String
+  amountPaid   Decimal      @db.Decimal(12, 2)
+  timestamp    String
+  status       String       @default("Success")
+}
+
+model OwnerMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  message   String
+  createdAt DateTime @default(now())
+}

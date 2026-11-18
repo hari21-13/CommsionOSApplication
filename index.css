@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  body * { visibility: hidden; }
+  #printableCertificate, #printableCertificate * { visibility: visible; }
+  #printableCertificate { position: fixed; inset: 0; background: #09090b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
